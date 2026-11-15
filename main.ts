@@ -1,0 +1,10 @@
+import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { resolve, join } from 'node:path';
+import { buildDossier } from './vendor/makefun-frontend.ts';
+const source = fileURLToPath(new URL('.', import.meta.url));
+const target = resolve(process.env.MAKEFUN_OUTPUT_DIR || '/output');
+mkdirSync(target, { recursive: true });
+for (const folder of ['app', 'screenshots']) cpSync(join(source, folder), join(target, folder), { recursive: true });
+const dossier = buildDossier(target, { text_max_bytes: 163840, screenshots: { max: 3, max_bytes: 262144 }, app_max_files: 993, app_max_bytes: 16777216 });
+writeFileSync(join(target, 'dossier.json'), dossier);
