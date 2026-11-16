@@ -2,16 +2,25 @@
   {
     "file": "1-board.jpg",
     "path": "#/",
-    "viewport": { "width": 1280, "height": 800 }
+    "viewport": {
+      "width": 1024,
+      "height": 640
+    }
   },
   {
     "file": "2-bounty.jpg",
-    "path": "#/bounty/threejs-fps-02",
-    "viewport": { "width": 1280, "height": 800 }
+    "path": "#/bounty/makefun-frontend-01",
+    "viewport": {
+      "width": 1024,
+      "height": 640
+    }
   },
   {
     "file": "3-leaderboard.jpg",
     "path": "#/bounty/threejs-fps-02/leaderboard",
-    "viewport": { "width": 390, "height": 844 }
+    "viewport": {
+      "width": 1024,
+      "height": 640
+    }
   }
 ]
