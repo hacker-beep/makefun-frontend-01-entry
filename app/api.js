@@ -1,4 +1,6 @@
 const cache = new Map(), pending = new Map();
+try { for (const [path, entry] of JSON.parse(sessionStorage.getItem('makefun-api-cache') || '[]')) cache.set(path, { ...entry, at: 0 }); } catch {}
+function saveCache() { try { sessionStorage.setItem('makefun-api-cache', JSON.stringify([...cache])); } catch {} }
 export const telemetry = { requests: 0, memory: 0, unchanged: 0, updatedAt: 0 };
 export async function get(path, force = false) {
   const old = cache.get(path);
@@ -7,12 +9,13 @@ export async function get(path, force = false) {
   const request = (async () => {
     const headers = old?.etag ? { 'If-None-Match': old.etag } : {};
     telemetry.requests++;
-    const res = await fetch('https://make.fun/api' + path, { headers });
+    const res = await fetch('https://make.fun/api' + path, { headers, cache: 'no-cache' });
     if (res.status === 304 && old) { telemetry.unchanged++; telemetry.updatedAt = Date.now(); old.at = Date.now(); return old.data; }
     if (!res.ok) throw new Error(res.status === 404 ? 'This page could not be found.' : `Live data is temporarily unavailable (${res.status}).`);
     const data = await res.json();
     telemetry.updatedAt = Date.now();
     cache.set(path, { data, etag: res.headers.get('etag'), at: Date.now() });
+    saveCache();
     return data;
   })();
   pending.set(path, request);
