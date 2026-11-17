@@ -7,11 +7,25 @@ export async function get(path, force = false) {
   if (!force && old && Date.now() - old.at < 60000) { telemetry.memory++; return old.data; }
   if (pending.has(path)) return pending.get(path);
   const request = (async () => {
-    // Compare exposed ETags after revalidation: the CDN's 304 response omits CORS headers.
-    const headers = {};
-    telemetry.requests++;
-    const res = await fetch('https://make.fun/api' + path, { headers, cache: 'no-store' });
-    if (res.status === 304 && old) { telemetry.unchanged++; telemetry.updatedAt = Date.now(); old.at = Date.now(); return old.data; }
+    const validationHeaders = new Headers();
+    const endpoint = new URL(`https://make.fun/api${path}`);
+    // Cross-origin 304s omit CORS headers. Let the HTTP cache attach its
+    // validator and merge those responses; same-origin requests can expose 304.
+    if (old?.etag && endpoint.origin === location.origin) {
+      validationHeaders.set('If-None-Match', old.etag);
+    }
+    telemetry.requests += 1;
+    const res = await fetch(endpoint, {
+      cache: 'no-cache', headers: validationHeaders
+    });
+    if (old && res.status === 304) {
+      const checkedAt = Date.now();
+      old.at = checkedAt;
+      telemetry.updatedAt = checkedAt;
+      telemetry.unchanged += 1;
+      saveCache();
+      return old.data;
+    }
     if (!res.ok) throw new Error(res.status === 404 ? 'This page could not be found.' : `Live data is temporarily unavailable (${res.status}).`);
     const data = await res.json();
     if (old?.etag && old.etag === res.headers.get('etag')) telemetry.unchanged++;
