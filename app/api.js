@@ -7,12 +7,14 @@ export async function get(path, force = false) {
   if (!force && old && Date.now() - old.at < 60000) { telemetry.memory++; return old.data; }
   if (pending.has(path)) return pending.get(path);
   const request = (async () => {
-    const headers = old?.etag ? { 'If-None-Match': old.etag } : {};
+    // Compare exposed ETags after revalidation: the CDN's 304 response omits CORS headers.
+    const headers = {};
     telemetry.requests++;
-    const res = await fetch('https://make.fun/api' + path, { headers, cache: 'no-cache' });
+    const res = await fetch('https://make.fun/api' + path, { headers, cache: 'no-store' });
     if (res.status === 304 && old) { telemetry.unchanged++; telemetry.updatedAt = Date.now(); old.at = Date.now(); return old.data; }
     if (!res.ok) throw new Error(res.status === 404 ? 'This page could not be found.' : `Live data is temporarily unavailable (${res.status}).`);
     const data = await res.json();
+    if (old?.etag && old.etag === res.headers.get('etag')) telemetry.unchanged++;
     telemetry.updatedAt = Date.now();
     cache.set(path, { data, etag: res.headers.get('etag'), at: Date.now() });
     saveCache();
@@ -22,5 +24,5 @@ export async function get(path, force = false) {
   try { return await request; } finally { pending.delete(path); }
 }
 export const bountyData = slug => get(`/competitions/${encodeURIComponent(slug)}?submissions=summary`);
-export const leaderboardData = (slug, phase = 'dev') => get(`/competitions/${encodeURIComponent(slug)}/leaderboard?rows=first&ties=runs&phase=${phase}`);
+export const leaderboardData = (slug, phase = 'dev') => get(`/competitions/${encodeURIComponent(slug)}/leaderboard?rows=all&ties=runs&phase=${phase}`);
 export const profileData = handle => get(`/profiles/${encodeURIComponent(handle)}`);
