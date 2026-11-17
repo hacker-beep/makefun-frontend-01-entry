@@ -2,6 +2,9 @@ const cache = new Map(), pending = new Map();
 try { for (const [path, entry] of JSON.parse(sessionStorage.getItem('makefun-api-cache') || '[]')) cache.set(path, { ...entry, at: 0 }); } catch {}
 function saveCache() { try { sessionStorage.setItem('makefun-api-cache', JSON.stringify([...cache])); } catch {} }
 export const telemetry = { requests: 0, memory: 0, unchanged: 0, updatedAt: 0 };
+// Network work belongs to the current route; cache reuse is session-wide.
+export function beginView() { telemetry.requests = 0; }
+export const boardData = (validate = false) => get('/competitions?activity=times&limit=100', validate);
 export async function get(path, force = false) {
   const old = cache.get(path);
   if (!force && old && Date.now() - old.at < 60000) { telemetry.memory++; return old.data; }
@@ -37,6 +40,12 @@ export async function get(path, force = false) {
   pending.set(path, request);
   try { return await request; } finally { pending.delete(path); }
 }
-export const bountyData = slug => get(`/competitions/${encodeURIComponent(slug)}?submissions=summary`);
+export async function bountyData(slug) {
+  const board = await boardData();
+  const listing = board.items.find(item => item.slug === slug);
+  // The board already carries live pots, rewards, rules and activity times.
+  // Only unlisted bounties need the standalone summary endpoint.
+  return listing || get(`/competitions/${encodeURIComponent(slug)}?submissions=summary`);
+}
 export const leaderboardData = (slug, phase = 'dev') => get(`/competitions/${encodeURIComponent(slug)}/leaderboard?rows=all&ties=runs&phase=${phase}`);
 export const profileData = handle => get(`/profiles/${encodeURIComponent(handle)}`);

@@ -1,5 +1,26 @@
 [
-  {"file":"1-board.jpg","path":"#/","viewport":{"width":1024,"height":640}},
-  {"file":"2-leaderboard.jpg","path":"#/bounty/makefun-frontend-01/leaderboard","viewport":{"width":1024,"height":640}},
-  {"file":"3-profile.jpg","path":"#/profile/nightshift-labs","viewport":{"width":1024,"height":640}}
+  {
+    "file": "1-board.jpg",
+    "path": "#/",
+    "viewport": {
+      "width": 1024,
+      "height": 640
+    }
+  },
+  {
+    "file": "2-leaderboard.jpg",
+    "path": "#/bounty/makefun-frontend-01/leaderboard",
+    "viewport": {
+      "width": 1024,
+      "height": 640
+    }
+  },
+  {
+    "file": "3-profile.jpg",
+    "path": "#/profile/nightshift-labs",
+    "viewport": {
+      "width": 1024,
+      "height": 640
+    }
+  }
 ]
